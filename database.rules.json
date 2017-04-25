@@ -4,13 +4,14 @@
     "tournament": {
       "$tournament": {
         "$score": {
-          ".write": "!data.exists() && data.child('name').val() != null && data.child('score').val() != null && data.child('timestamp').val() != null && (root.child('activeTournament').val() != null || root.child('activeTournament').val() != '')"
+          ".write": "!data.exists() && newData.child('name').val() != null && newData.child('score').val() != null && newData.child('timestamp').val() != null && (root.child('activeTournament').val() != null || root.child('activeTournament').val() != '')"
         }
       }
     },
     "global": {
+      ".write": "!data.exists() && newData.child('name').val() != null && newData.child('score').val() != null && newData.child('timestamp').val() != null",
       "$score": {
-      	".write": "!data.exists() && data.child('name').val() != null && data.child('score').val() != null && data.child('timestamp').val() != null"
+      	".write": "!data.exists() && newData.child('name').val() != null && newData.child('score').val() != null && newData.child('timestamp').val() != null"
       }
     }
   }

@@ -1,4 +1,5 @@
-
+<!DOCTYPE html>
+<html lang="sv">
 <!--
 
   Information:
@@ -8,33 +9,49 @@
   Ljuden är dels gjorda själv eller tagna från det fria programmet Linux MultiMedia Studio,
   dels hämtade från freesound.org.
   Ljuden är hostade av joarc.se under xzy.se (tack till Joar Classon).
+  Modifierad av Joar Classon för att lägga till scoreboard och tournament mode.
 
 -->
 
-<title>MS Röj</title>
-<meta charset="utf-8">
-<link rel="shortcut icon" type="image/png" href="http://xzy.se/minesweeper/img/favicon.png">
+  <head>
+    <title>MS Röj</title>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" type="image/png" href="http://xzy.se/minesweeper/img/favicon.png">
+    <style>
+      @import url('https://fonts.googleapis.com/css?family=Baloo+Thambi');
+      @import url('https://fonts.googleapis.com/css?family=Ubuntu');
+    </style>
+  </head>
+  <body>
 
-<style>
-  @import url('https://fonts.googleapis.com/css?family=Baloo+Thambi');
-  @import url('https://fonts.googleapis.com/css?family=Ubuntu');
-</style>
+    <h2>Laddar data...</h2>
 
-<h2>Laddar data...</h2>
+    <audio id="mines2" loop><source src="http://xzy.se/minesweeper/sounds/mines2.wav" type="audio/wav"></audio>
+    <audio id="mines" loop><source src="http://xzy.se/minesweeper/sounds/mines.wav" type="audio/wav"></audio>
+    <audio id="area"><source src="http://xzy.se/minesweeper/sounds/area.wav" type="audio/wav"></audio>
+    <audio id="flag"><source src="http://xzy.se/minesweeper/sounds/flag.wav" type="audio/wav"></audio>
+    <audio id="explode"><source src="http://xzy.se/minesweeper/sounds/explode.wav" type="audio/wav"></audio>
+    <audio id="intro" loop><source src="http://xzy.se/minesweeper/sounds/intro.wav" type="audio/wav"></audio>
+    <audio id="reveal"><source src="http://xzy.se/minesweeper/sounds/reveal.wav" type="audio/wav"></audio>
+    <audio id="victory"><source src="http://xzy.se/minesweeper/sounds/victory.wav" type="audio/wav"></audio>
+    <audio id="newGame"><source src="http://xzy.se/minesweeper/sounds/newGame.wav" type="audio/wav"></audio>
+    <audio id="begin"><source src="http://xzy.se/minesweeper/sounds/begin.wav" type="audio/wav"></audio>
 
-<audio id="mines2" loop><source src="http://xzy.se/minesweeper/sounds/mines2.wav" type="audio/wav"></audio>
-<audio id="mines" loop><source src="http://xzy.se/minesweeper/sounds/mines.wav" type="audio/wav"></audio>
-<audio id="area"><source src="http://xzy.se/minesweeper/sounds/area.wav" type="audio/wav"></audio>
-<audio id="flag"><source src="http://xzy.se/minesweeper/sounds/flag.wav" type="audio/wav"></audio>
-<audio id="explode"><source src="http://xzy.se/minesweeper/sounds/explode.wav" type="audio/wav"></audio>
-<audio id="intro" loop><source src="http://xzy.se/minesweeper/sounds/intro.wav" type="audio/wav"></audio>
-<audio id="reveal"><source src="http://xzy.se/minesweeper/sounds/reveal.wav" type="audio/wav"></audio>
-<audio id="victory"><source src="http://xzy.se/minesweeper/sounds/victory.wav" type="audio/wav"></audio>
-<audio id="newGame"><source src="http://xzy.se/minesweeper/sounds/newGame.wav" type="audio/wav"></audio>
-<audio id="begin"><source src="http://xzy.se/minesweeper/sounds/begin.wav" type="audio/wav"></audio>
-
-<script src="http://koda.nu/simple.js"></script>
-<script>
+    <script src="http://koda.nu/simple.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/3.8.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyBENZopvXaYEc4llB2igJwUGEjkpVra5J8",
+        authDomain: "minesweeper-29f5c.firebaseapp.com",
+        databaseURL: "https://minesweeper-29f5c.firebaseio.com",
+        projectId: "minesweeper-29f5c",
+        storageBucket: "minesweeper-29f5c.appspot.com",
+        messagingSenderId: "430546270159"
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script>
 
   function Gui(audio)
   {
@@ -872,4 +889,6 @@
     gui = new Gui(audio);
   }
 
-</script>
+    </script>
+  </body>
+</html>
