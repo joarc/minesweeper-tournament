@@ -1,0 +1,875 @@
+
+<!--
+
+  Information:
+
+  Megasoft Röj, inspererad av klassikern Microsoft Röj, som även går under namnen Minröj, Mines och Minesweeper.
+  Programmerat av Gustav Ekner (gustavwiz)
+  Ljuden är dels gjorda själv eller tagna från det fria programmet Linux MultiMedia Studio,
+  dels hämtade från freesound.org.
+  Ljuden är hostade av joarc.se under xzy.se (tack till Joar Classon).
+
+-->
+
+<title>MS Röj</title>
+<meta charset="utf-8">
+<link rel="shortcut icon" type="image/png" href="http://xzy.se/minesweeper/img/favicon.png">
+
+<style>
+  @import url('https://fonts.googleapis.com/css?family=Baloo+Thambi');
+  @import url('https://fonts.googleapis.com/css?family=Ubuntu');
+</style>
+
+<h2>Laddar data...</h2>
+
+<audio id="mines2" loop><source src="http://xzy.se/minesweeper/sounds/mines2.wav" type="audio/wav"></audio>
+<audio id="mines" loop><source src="http://xzy.se/minesweeper/sounds/mines.wav" type="audio/wav"></audio>
+<audio id="area"><source src="http://xzy.se/minesweeper/sounds/area.wav" type="audio/wav"></audio>
+<audio id="flag"><source src="http://xzy.se/minesweeper/sounds/flag.wav" type="audio/wav"></audio>
+<audio id="explode"><source src="http://xzy.se/minesweeper/sounds/explode.wav" type="audio/wav"></audio>
+<audio id="intro" loop><source src="http://xzy.se/minesweeper/sounds/intro.wav" type="audio/wav"></audio>
+<audio id="reveal"><source src="http://xzy.se/minesweeper/sounds/reveal.wav" type="audio/wav"></audio>
+<audio id="victory"><source src="http://xzy.se/minesweeper/sounds/victory.wav" type="audio/wav"></audio>
+<audio id="newGame"><source src="http://xzy.se/minesweeper/sounds/newGame.wav" type="audio/wav"></audio>
+<audio id="begin"><source src="http://xzy.se/minesweeper/sounds/begin.wav" type="audio/wav"></audio>
+
+<script src="http://koda.nu/simple.js"></script>
+<script>
+
+  function Gui(audio)
+  {
+    this.topSpacing = 30;
+    this.xSpacing = 50;
+    this.width = 235;
+    this.height = 445;
+    this.border = 5;
+    this.padding = 20;
+    this.objectMargin = 10;
+    this.newGameDifficulty = 1;
+    this.newGameSize = 1;
+    this.animationList = [];
+    this.pointer = false;
+    this.mouseLeftClick = false;
+    this.mouseLeftDown = false;
+    this.mouseRightClick = false;
+    this.mouseRightDown = false;
+    this.game = false;
+    this.mouseWasInside = false;
+    this.oldDate = new Date();
+    this.audio = audio;
+    this.splash = new Splash(this);
+    this.time = 0;
+    this.lastTime = 0;
+
+    this.elements =
+    [
+      {type: "button", text: "Starta nytt spel", size: 13, hover: "false", selGroup: -1},
+      {type: "text", text: "Svårighetsgrad:", size: 13},
+      {type: "button", text: "Nybörjare", size: 13, hover: "false", selGroup: 0},
+      {type: "button", text: "Etablerad", size: 13, hover: "false", selGroup: 0},
+      {type: "button", text: "Expert", size: 13, hover: "false", selGroup: 0},
+      {type: "text", text: "Tidsåtgång:", size: 13},
+      {type: "button", text: "8 X 8", size: 13, hover: "false", selGroup: 1},
+      {type: "button", text: "16 X 16", size: 13, hover: "false", selGroup: 1},
+      {type: "button", text: "23 X 23", size: 13, hover: "false", selGroup: 1},
+      {type: "text", text: "", size: 10},
+      {type: "text", text: false, size: 13, color: "red"}
+    ];
+
+    this.latestInSelGroup = [3, 7];
+
+    this.functions =
+    [
+      function(self) {
+        self.splash.destruct = true;
+        self.splash = false;
+
+        self.stopAllBackgroundMusic();
+
+        // Vi måste vänta på att alla under-animationer verkligen har avslutats:
+        self.animationList.push(function()
+        {
+          // När self.game.stop sätts till false, kommer game så småningom sätta self.game till null, dvs ta bort sig själv.
+          if (self.game !== false)
+            self.game.stop = true;
+          else
+          {
+            self.game = new Game(self.newGameSize, self.newGameDifficulty, self);
+            return false;
+          }
+        });
+
+      },
+      function(self) {},
+      function(self) {
+        self.newGameDifficulty = 0;
+      },
+      function(self) {
+        self.newGameDifficulty = 1;
+      },
+      function(self) {
+        self.newGameDifficulty = 2;
+      },
+      function(self) {},
+      function(self) {
+        self.newGameSize = 0;
+      },
+      function(self) {
+        self.newGameSize = 1;
+      },
+      function(self) {
+        self.newGameSize = 2;
+      },
+      function(self) {},
+      function(self) {
+        var minutes = String(floor(self.time/60));
+        if (minutes.length === 1)
+          minutes = "0" + minutes;
+
+        var seconds = String(self.time % 60);
+        if (seconds.length === 1)
+          seconds = "0" + seconds;
+
+        var t = minutes + ":" + seconds;
+
+        return "Förfluten tid: " + t;
+      }
+    ];
+
+    requestAnimationFrame(this.loop.bind(this));
+    this.audio.intro.play();
+  }
+
+  Gui.prototype.stopAllBackgroundMusic = function()
+  {
+    this.stopSound(this.audio.intro);
+    this.stopSound(this.audio.mines);
+    this.stopSound(this.audio.mines2);
+    this.stopSound(this.audio.victory);
+  }
+
+  Gui.prototype.stopSound = function(sound)
+  {
+    sound.pause();
+    sound.currentTime = 0;
+  }
+
+  Gui.prototype.drawGui = function()
+  {
+    var buttonColorSelected = "#4AB283";
+    var buttonColorUnselected = "#2E6FD8";
+    var buttonHoverColor = "rgb(101, 133, 171)";
+    var textColor = "white";
+    var leftTextMargin = 5;
+
+    rectangle(this.xSpacing, this.topSpacing, this.width, this.height, "black");
+    rectangle(this.xSpacing + this.border, this.topSpacing + this.border, this.width - this.border * 2, this.height - this.border * 2, "#363636");
+
+    var yPos = this.topSpacing + this.border + this.padding;
+
+    for (var i = 0; i < this.elements.length; ++i)
+    {
+      var height = this.elements[i].size * 2;
+
+      if (this.elements[i].type === "button")
+      {
+        var buttonColor = this.latestInSelGroup[this.elements[i].selGroup] === i ? buttonColorSelected : buttonColorUnselected;
+        var thisButtonColor = this.elements[i].hover === true ? buttonHoverColor : buttonColor;
+
+        rectangle(this.xSpacing + this.border + this.padding, yPos, this.width - (this.border + this.padding) * 2, height, thisButtonColor);
+        text(this.xSpacing + this.border + this.padding + leftTextMargin, yPos + (height + this.elements[i].size) / 2 - 2, this.elements[i].size, this.elements[i].text, textColor);
+      }
+      else if (this.elements[i].type === "text")
+      {
+        var str;
+
+        // Är elementets text satt till false, kommer istället dess funktion, som annars inte är specificerad för text, att förse med texten:
+        if (this.elements[i].text === false)
+          str = this.functions[i](this);
+        else
+          str = this.elements[i].text;
+
+        var color = typeof this.elements[i].color === "undefined" ? textColor : this.elements[i].color;
+        text(this.xSpacing + this.border + this.padding + leftTextMargin, yPos + (height + this.elements[i].size) / 2, this.elements[i].size, str, color);
+      }
+
+      yPos += height + this.objectMargin;
+    }
+  }
+
+  Gui.prototype.handleGui = function()
+  {
+    var insideCond = mouse.x > this.xSpacing && mouse.x < this.xSpacing + this.width && mouse.y > this.topSpacing && mouse.y < this.topSpacing + this.height;
+
+    if (insideCond || this.mouseWasInside)
+    {
+      this.mouseWasInside = true;
+      var yPos = this.topSpacing + this.border + this.padding;
+
+      for (var i = 0; i < this.elements.length; ++i)
+      {
+        var height = this.elements[i].size * 2;
+
+        if (mouse.x > this.xSpacing + this.border + this.padding && mouse.x < this.xSpacing + this.width - this.border - this.padding &&
+            mouse.y > yPos && mouse.y < yPos + height)
+        {
+          this.elements[i].hover = true;
+
+          if (this.elements[i].type === "button")
+            this.pointer = true;
+
+          if (this.mouseLeftClick && this.elements[i].type === "button")
+          {
+            this.functions[i](this);
+            if (this.elements[i].selGroup !== -1)
+              this.latestInSelGroup[this.elements[i].selGroup] = i;
+          }
+        }
+        else
+          this.elements[i].hover = false;
+
+        yPos += height + this.objectMargin;
+      }
+    }
+
+    if (!insideCond)
+      this.mouseWasInside = false;
+
+    this.drawGui();
+  }
+
+  Gui.prototype.loop = function()
+  {
+    if (mouse.left && !this.mouseLeftClick && !this.mouseLeftDown)
+      this.mouseLeftClick = this.mouseLeftDown = true;
+    else if (this.mouseLeftClick)
+      this.mouseLeftClick = false;
+    else if (!mouse.left && this.mouseLeftDown)
+      this.mouseLeftDown = false;
+    if (mouse.right && !this.mouseRightClick && !this.mouseRightDown)
+      this.mouseRightClick = this.mouseRightDown = true;
+    else if (this.mouseRightClick)
+      this.mouseRightClick = false;
+    else if (!mouse.right && this.mouseRightDown)
+      this.mouseRightDown = false;
+
+    this.pointer = false;
+
+    var currentDate = new Date();
+    var diff = (currentDate - this.oldDate) / 1000;
+    this.oldDate = currentDate;
+
+    for (var i = 0; i < this.animationList.length; ++i)
+      if (this.animationList[i](diff) === false)
+        this.animationList.splice(i--, 1);
+
+    // Den här funktionen sätts inte in i animationList för att den ska garanteras att köras efter allt annat:
+    this.handleGui();
+
+    if (this.time > this.lastTime)
+    {
+      this.drawGui();
+      this.lastTime = this.time;
+    }
+
+    if (this.pointer)
+      document.body.style.cursor = "pointer";
+    else
+      document.body.style.cursor = "default";
+
+    requestAnimationFrame(this.loop.bind(this));
+  }
+
+  function Game(size, minesPercentage, gui)
+  {
+    this.difficulties = [0.1, 0.17, 0.24];
+    this.sizes = [8, 16, 23];
+
+    this.mines = [];
+    this.animationList = [];
+    this.gameRunning = false;
+    this.squareSize = 27;
+    this.margin = 3;
+    this.squaresRevealed = 0;
+    this.hasClicked = false;
+    this.width = this.sizes[size];
+    this.height = this.sizes[size];
+    this.gui = gui;
+    this.squares = this.width * this.height;
+    this.minesPercentage = this.difficulties[minesPercentage];
+    this.numberOfMines = Math.floor(this.minesPercentage * this.squares);
+    this.leftSpacing = gui.xSpacing * 2 + gui.width;
+    this.hasBegun = false;
+    this.stop = false;
+    this.multipleSquaresRevealed = -1000; // Det ska inte låta första gången, men sedan sätts den till 0.
+    this.time = 0;
+    this.second = 0;
+
+    this.startGame();
+  }
+
+  Game.prototype.loopAround = function(x, y, func, includeMiddle)
+  {
+    var includeMiddle = typeof includeMiddle === "undefined" ? false : includeMiddle;
+    var squares = [[y-1, x-1], [y-1, x], [y-1, x+1], [y, x-1], [y, x+1], [y+1, x-1], [y+1, x], [y+1, x+1]];
+
+    if (includeMiddle)
+      squares.push([y, x]);
+
+    for (var i = 0; i < squares.length; ++i)
+    {
+      // Om vi inte är utanför spelplanen
+      if (squares[i][0] >= 0 && squares[i][0] < this.height && squares[i][1] >= 0 && squares[i][1] < this.width)
+      {
+        if (func(squares[i][1], squares[i][0]) === false)
+          break;
+      }
+    }
+  }
+
+  Game.prototype.drawSquare = function(x, y, type, opacity)
+  {
+    opacity = typeof opacity === "undefined" ? 1 : opacity;
+    var xCord = this.leftSpacing + x * (this.squareSize + this.margin);
+    var yCord = this.gui.topSpacing + y * (this.squareSize + this.margin);
+    var pos = y * this.width + x;
+
+    if (type === "mine")
+    {
+      rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsla(0, 0%, 83%, " + opacity + ")");
+      circle(xCord + this.squareSize/2, yCord + this.squareSize/2, this.squareSize * 0.35, "rgba(0, 0, 0, " + opacity + ")");
+    }
+    else if (type === "empty")
+    {
+      rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsla(0, 0%, 83%, " + opacity + ")");
+      if (this.mines[pos].number !== 0)
+        text(xCord + 10, yCord + 20, 15, this.mines[pos].number, "hsla(0, 0%, 0%, " + opacity + ")");
+    }
+    else if (type === "flag")
+      rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsla(39, 100%, 50%, " + opacity + ")");
+    else if (type === "hidden")
+      rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsl(195, 50%, 50%)");
+  }
+
+  Game.prototype.revealEverything = function()
+  {
+    for (var i = 0; i < this.mines.length; ++i)
+    {
+      var y = Math.floor(i / this.width);
+      var x = i - this.width * y;
+
+      if (this.mines[i].number === -1)
+        this.drawSquare(x, y, "mine");
+      else
+        this.drawSquare(x, y, "empty");
+    }
+  }
+
+  Game.prototype.drawEverything = function()
+  {
+    rectangle(0, 0, totalWidth, totalHeight, "white");
+    this.gui.drawGui();
+
+    for (var i = 0; i < this.mines.length; ++i)
+    {
+      var y = Math.floor(i / this.width);
+      var x = i - this.width * y;
+
+      if (this.mines[i].state === 0)
+        this.drawSquare(x, y, "hidden");
+      else if (this.mines[i].state === 2)
+        this.drawSquare(x, y, "flag");
+      else
+      {
+        if (this.mines[i].number === -1)
+          this.drawSquare(x, y, "mine");
+        else
+          this.drawSquare(x, y, "empty");
+      }
+    }
+  }
+
+  Game.prototype.handleMineFieldGui = function(diff)
+  {
+    if (this.gameRunning)
+    {
+      if (this.hasClicked)
+      {
+        this.second += diff;
+        if (this.second >= 1)
+        {
+          --this.second;
+          this.gui.time += 1;
+        }
+      }
+
+      // Kolla så man har musen innanför spelplanen:
+      if (mouse.x > this.leftSpacing && mouse.x < this.leftSpacing + this.width * this.squareSize + (this.width - 1) * this.margin &&
+          mouse.y > this.gui.topSpacing && mouse.y < this.gui.topSpacing + this.height * this.squareSize + (this.height - 1) * this.margin)
+      {
+        var x = (mouse.x - this.leftSpacing) / (this.squareSize + this.margin);
+        var y = (mouse.y - this.gui.topSpacing) / (this.squareSize + this.margin);
+
+        if (x - Math.floor(x) < this.squareSize / (this.margin + this.squareSize) &&
+            y - Math.floor(y) < this.squareSize / (this.margin + this.squareSize))
+        {
+          // Nu innehåller x och y rut-positionen:
+          x = Math.floor(x);
+          y = Math.floor(y);
+
+          if (this.gui.mouseLeftClick)
+            this.mineFieldClick(x, y, "left");
+          else if (this.gui.mouseRightClick)
+            this.mineFieldClick(x, y, "right");
+
+          this.gui.pointer = true;
+        }
+      }
+    }
+
+    for (var i = 0; i < this.animationList.length; ++i)
+      if (this.animationList[i](diff) === false)
+        this.animationList.splice(i--);
+
+    if (this.stop)
+    {
+      this.gui.game = false;
+      this.gui.time = 0;
+      return false;
+    }
+  }
+
+  Game.prototype.win = function()
+  {
+    this.gui.stopAllBackgroundMusic();
+    new Victory(this);
+    this.gameRunning = false;
+  }
+
+  Game.prototype.lose = function(x, y)
+  {
+    var xCord = this.leftSpacing + x * (this.squareSize + this.margin) + this.squareSize / 2;
+    var yCord = this.gui.topSpacing + y * (this.squareSize + this.margin) + this.squareSize / 2;
+
+    this.gui.stopAllBackgroundMusic();
+    new Explosion(xCord, yCord, this);
+    this.gameRunning = false;
+  }
+
+  Game.prototype.revealSquare = function(x, y)
+  {
+    var pos = y * this.width + x;
+    this.mines[pos].state = 1;
+
+    if (this.mines[pos].number === -1)
+    {
+      this.drawSquare(x, y, "mine");
+      this.lose(x, y);
+    }
+    else if (this.mines[pos].number >= 0)
+    {
+      this.drawSquare(x, y, "empty");
+      ++this.squaresRevealed;
+    }
+
+    if (this.squaresRevealed + this.numberOfMines === this.squares)
+      this.win();
+  }
+
+  Game.prototype.revealEmptySquares = function(x, y, first)
+  {
+    this.revealSquare(x, y);
+
+    var self = this;
+    this.loopAround(x, y, function(x2, y2)
+    {
+      var pos = y2 * self.width + x2;
+
+      if (self.mines[pos].state === 0)
+      {
+        if (self.mines[pos].number === 0)
+        {
+          self.revealEmptySquares(x2, y2, false);
+        }
+        else if (self.mines[pos].number !== -1)
+        {
+          ++self.multipleSquaresRevealed;
+          self.revealSquare(x2, y2);
+        }
+      }
+    }, false);
+
+    if (first)
+    {
+      if (self.multipleSquaresRevealed >= 7)
+        self.gui.audio.area.play();
+      self.multipleSquaresRevealed = 0;
+    }
+  }
+
+  Game.prototype.toggleFlag = function(x, y)
+  {
+    var pos = y * this.width + x;
+
+    if (this.mines[pos].state === 0)
+    {
+      this.mines[pos].state = 2;
+      this.drawSquare(x, y, "flag");
+      this.gui.audio.flag.play();
+    }
+    else if (this.mines[pos].state === 2)
+    {
+      this.mines[pos].state = 0;
+      this.drawSquare(x, y, "hidden");
+    }
+  }
+
+  Game.prototype.mineFieldClick = function(x, y, button)
+  {
+    if (!this.hasClicked && button === "left")
+      this.firstClick(x, y);
+
+    var pos = y * this.width + x;
+
+    if (button === "left" && this.mines[pos].state === 0)
+    {
+      if (this.mines[pos].number === 0)
+        this.revealEmptySquares(x, y, true);
+      else
+        this.revealSquare(x, y);
+    }
+    else if (button === "right")
+      if (this.mines[pos].state !== 1)
+        this.toggleFlag(x, y);
+  }
+
+  Game.prototype.firstClick = function(x, y)
+  {
+    this.gui.audio.begin.play();
+    if (this.width === this.sizes[2] && this.minesPercentage === this.difficulties[2])
+      this.gui.audio.mines2.play();
+    else
+      this.gui.audio.mines.play();
+
+    this.hasClicked = true;
+
+    var self = this;
+
+    // Fyll arrayen med tomma minor:
+    for (var i = 0; i < this.squares; ++i)
+      this.mines[i] = {number: 0, state: 0};
+
+    // Slumpa ut minor:
+    for (var i = 0; i < this.numberOfMines; ++i)
+    {
+      var pos = random(this.squares - i);
+
+      for (var j = 0; j <= pos; ++j)
+      {
+        if (this.mines[j].number === -1)
+          ++pos;
+      }
+
+      var invalidPos = false;
+      this.loopAround(x, y, function(x2, y2)
+      {
+        var pos2 = y2 * self.width + x2;
+        if (pos2 === pos)
+        {
+          invalidPos = true;
+          return false;
+        }
+      }, true);
+
+      if (invalidPos)
+       --i;
+      else
+        this.mines[pos].number = -1;
+    }
+
+    // Sätt ut nummer:
+    for (var i = 0; i < this.height; ++i)
+    {
+      for (var j = 0; j < this.width; ++j)
+      {
+        var pos = i * this.width + j;
+
+        if (this.mines[pos].number != -1)
+        {
+          var numberOfMinesAround = 0;
+
+          var self = this;
+          this.loopAround(j, i, function(x, y)
+          {
+            var pos2 = y * self.width + x;
+            if (self.mines[pos2].number === -1)
+              ++numberOfMinesAround;
+          }, false);
+
+          this.mines[pos].number = numberOfMinesAround;
+        }
+      }
+    }
+  }
+
+  Game.prototype.startGame = function()
+  {
+    rectangle(0, 0, totalWidth, totalHeight, "white");
+    this.gui.drawGui();
+    this.gui.audio.newGame.play();
+    this.gui.animationList.push(this.handleMineFieldGui.bind(this));
+    new Animate(function()
+    {
+      this.gameRunning = this.hasBegun = true;
+    }.bind(this), this);
+  }
+
+  function Splash(gui)
+  {
+    this.destruct = false;
+    this.gui = gui;
+    this.x = random(totalWidth - this.gui.xSpacing * 2 - this.gui.width - 270) + this.gui.xSpacing * 2 + this.gui.width;
+    this.y = random(totalHeight - 65) + 65;
+    this.t = 0;
+
+    gui.animationList.push(this.loop.bind(this));
+  }
+
+  Splash.prototype.loop = function(diff)
+  {
+    if (this.destruct)
+      return false;
+
+    if (this.t > 3)
+    {
+      this.t -= 3;
+      this.x = random(totalWidth - this.gui.xSpacing * 2 - this.gui.width - 270) + this.gui.xSpacing * 2 + this.gui.width;
+      this.y = random(totalHeight - 65) + 65;
+    }
+
+    rectangle(this.gui.xSpacing * 2 + this.gui.width, 0, totalWidth, totalHeight, "white");
+    text(this.x, this.y, 65, "MS Röj", "red", "Baloo Thambi");
+
+    this.t += diff;
+  }
+
+  function Animate(callback, game)
+  {
+    this.animationList = [];
+    this.t = 0;
+    this.rowPosition = 0;
+    this.allRowsStarted = false;
+    this.game = game;
+    this.callback = callback;
+
+    game.animationList.push(this.loop.bind(this));
+  }
+
+  Animate.prototype.loop = function(diff)
+  {
+    this.t += diff * 40;
+
+    if (this.t >= 1)
+    {
+      --this.t;
+
+      if (this.rowPosition < this.game.width)
+      {
+        var i, j;
+        for (i = 0, j = this.rowPosition; i < this.rowPosition + 1; ++i, --j)
+          this.animationList.push(new AnimationSquare(j, i, this));
+      }
+      else if (this.rowPosition < this.game.width + this.game.height - 1)
+      {
+        var i, j;
+        for (i = this.rowPosition - this.game.width + 1, j = this.game.width - 1; i < this.game.height; ++i, --j)
+          this.animationList.push(new AnimationSquare(j, i, this));
+      }
+      else
+        this.allRowsStarted = true;
+
+      ++this.rowPosition;
+    }
+
+    for (var i = 0; i < this.animationList.length; ++i)
+      if (this.animationList[i].loop(diff) === false)
+        this.animationList.splice(i--, 1);
+
+    if (this.animationList.length === 0 && this.allRowsStarted)
+    {
+      this.callback();
+      return false;
+    }
+  }
+
+  function AnimationSquare(x, y, animate)
+  {
+    this.t = 1;
+    this.x = x;
+    this.y = y;
+    this.animate = animate;
+  }
+
+  AnimationSquare.prototype.loop = function(diff)
+  {
+    var game = this.animate.game;
+
+    // 195 + 4 * 180 * this.t * (this.t - 9) / pow(9, 2);
+    var h = 195 + 80/9 * pow(this.t, 2) - 80 * this.t;
+
+    if (h >= 195)
+      h = 195;
+
+    var xCord = game.leftSpacing + this.x * (game.squareSize + game.margin);
+    var yCord = game.gui.topSpacing + this.y * (game.squareSize + game.margin);
+    rectangle(xCord, yCord, game.squareSize, game.squareSize, "hsl(" + h + ", 50%, 50%)");
+
+    if (h === 195)
+      return false;
+
+    this.t += diff * 100;
+  }
+
+  function Explosion(x, y, game)
+  {
+    this.x = x;
+    this.y = y;
+    this.t = 0;
+    this.game = game;
+    this.reStartVal = 2;
+    this.exMaxVal = 3;
+    this.finish = 4;
+    this.revealMusicStarted = false;
+
+    game.gui.audio.explode.play();
+    game.animationList.push(this.loop.bind(this));
+  }
+
+  Explosion.prototype.reveal = function()
+  {
+    this.game.drawEverything();
+
+    if (this.t > this.reStartVal)
+    {
+      for (var i = 0; i < this.game.mines.length; ++i)
+      {
+        var y = Math.floor(i / this.game.width);
+        var x = i - this.game.width * y;
+
+        if (this.game.mines[i].number === -1)
+          this.game.drawSquare(x, y, "mine", (this.t - this.reStartVal) / (this.finish - this.reStartVal));
+        else
+          this.game.drawSquare(x, y, "empty", (this.t - this.reStartVal) / (this.finish - this.reStartVal));
+      }
+
+      if (!this.revealMusicStarted)
+      {
+        this.game.gui.audio.reveal.play();
+        this.revealMusicStarted = true;
+      }
+    }
+  }
+
+  Explosion.prototype.loop = function(diff)
+  {
+    var size = this.t * 80;
+
+    this.reveal();
+
+    for (var i = 0; i < 3; ++i)
+    {
+      var x = this.x + random(201) - 100;
+      var y = this.y + random(201) - 100;
+      var size2 = random(10) + 3;
+      circle(x, y, size2, "rgba(244, 161, 66, " + Number(1 - this.t / this.exMaxVal) +  ")");
+    }
+
+    ring(this.x, this.y, size, 3, "rgba(255, 0, 0, " + Number(1 - this.t / this.exMaxVal) +  ")");
+
+    if (this.t >= this.finish)
+    {
+      this.reveal();
+      return false;
+    }
+
+    this.t += diff;
+  }
+
+  function Victory(game)
+  {
+    this.t = 0;
+    this.game = game;
+    this.t1 = 4;
+    this.t2 = 9;
+    this.t3 = 7;
+    this.t4 = 11.7;
+    this.t5 = 15;
+    this.h = 0;
+    this.introMusicStarted = false;
+    this.game.gui.audio.victory.play();
+
+    game.animationList.push(this.loop.bind(this));
+  }
+
+  Victory.prototype.loop = function(diff)
+  {
+    if (this.t >= this.t1 && this.t < this.t3)
+    {
+      this.game.drawEverything();
+      rectangle(this.game.leftSpacing, this.game.gui.topSpacing, totalWidth, totalHeight, "rgba(255, 255, 255, " + 1 * (this.t - this.t1) / (this.t3 - this.t1) + ")");
+    }
+    if (this.t >= this.t2)
+    {
+      this.h += diff * 20;
+
+      rectangle(this.game.leftSpacing, this.game.gui.topSpacing, totalWidth, totalHeight, "white");
+      text(this.game.leftSpacing + 30, this.game.gui.topSpacing + 150, 80, "Grattis!", "hsla("+this.h+", 50%, 50%, " + 2 * (this.t - this.t2) / (this.t4 - this.t3) + ")");
+    }
+    if (this.t >= this.t5 && !this.introMusicStarted)
+    {
+      this.game.gui.audio.intro.play();
+      this.introMusicStarted = true;
+    }
+
+    this.t += diff;
+  }
+
+  function start()
+  {
+    text = function(x, y, size, text, color, font)
+    {
+      font = typeof font === "undefined" ? "Ubuntu" : font;
+      c.context2D.font = size + "pt " + font;
+      c.context2D.fillStyle = color;
+      c.context2D.fillText(text, x, y);
+    }
+
+    var audio =
+    {
+      mines2: document.getElementById("mines2"),
+      mines: document.getElementById("mines"),
+      flag: document.getElementById("flag"),
+      victory: document.getElementById("victory"),
+      explode: document.getElementById("explode"),
+      intro: document.getElementById("intro"),
+      reveal: document.getElementById("reveal"),
+      begin: document.getElementById("begin"),
+      newGame: document.getElementById("newGame"),
+      area: document.getElementById("area")
+    }
+
+    audio.mines2.volume = 0.1;
+    audio.mines.volume = 0.1;
+    audio.intro.volume = 0.7;
+    audio.victory.volume = 0.3;
+    audio.flag.volume = 0.2;
+    audio.reveal.volume = 0.5;
+    audio.begin.volume = 0.4;
+    audio.newGame.volume = 0.5;
+    audio.area.volume = 0.2;
+
+    fill("white");
+    gui = new Gui(audio);
+  }
+
+</script>

@@ -1,0 +1,17 @@
+{
+  "rules": {
+    ".read": true,
+    "tournament": {
+      "$tournament": {
+        "$score": {
+          ".write": "!data.exists() && data.child('name').val() != null && data.child('score').val() != null && data.child('timestamp').val() != null && (root.child('activeTournament').val() != null || root.child('activeTournament').val() != '')"
+        }
+      }
+    },
+    "global": {
+      "$score": {
+      	".write": "!data.exists() && data.child('name').val() != null && data.child('score').val() != null && data.child('timestamp').val() != null"
+      }
+    }
+  }
+}
