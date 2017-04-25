@@ -90,7 +90,8 @@
       {type: "button", text: "16 X 16", size: 13, hover: "false", selGroup: 1},
       {type: "button", text: "23 X 23", size: 13, hover: "false", selGroup: 1},
       {type: "text", text: "", size: 10},
-      {type: "text", text: false, size: 13, color: "red"}
+      {type: "text", text: false, size: 13, color: "red"},
+      {type: "button", text: "Scoreboard", size: 13, hover: "false", selGroup: 2}
     ];
 
     this.latestInSelGroup = [3, 7];
@@ -150,6 +151,9 @@
         var t = minutes + ":" + seconds;
 
         return "Förfluten tid: " + t;
+      },
+      function(self) {
+        window.open('/scoreboard.html', 'Scoreboard', 'width=400,height=500,top=0,left=0,titlebar=no,menubar=no,toolbar=no,location=no,status=no');
       }
     ];
 
@@ -461,6 +465,22 @@
     this.gui.stopAllBackgroundMusic();
     new Victory(this);
     this.gameRunning = false;
+
+    var mineScore = 0, timeScore = 0, score = 0;
+    for (var i = 0; i < this.mines.length; i++) {
+      var mine = this.mines[i];
+      if (mine.number === -1) mineScore += 10;
+    }
+    timeScore += this.gui.time;
+    score = mineScore+timeScore;
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize};
+    firebase.database().ref('activeTournament').once('value', function(snapshot){
+      if (snapshot.val() != null && snapshot.val() != "") {
+        firebase.database().ref('tournament/'+snapshot.val()).push(data);
+      }
+    });
+    firebase.database().ref('global').push(data);
+    console.log(this.gui.name+"| Din Poäng: "+data.score);
   }
 
   Game.prototype.lose = function(x, y)
@@ -471,6 +491,22 @@
     this.gui.stopAllBackgroundMusic();
     new Explosion(xCord, yCord, this);
     this.gameRunning = false;
+
+    var mineScore = 0, timeScore = 0, score = 0;
+    for (var i = 0; i < this.mines.length; i++) {
+      var mine = this.mines[i];
+      if (mine.number === -1) mineScore += 10;
+    }
+    timeScore += this.gui.time;
+    score = mineScore+timeScore;
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize};
+    firebase.database().ref('activeTournament').once('value', function(snapshot){
+      if (snapshot.val() != null && snapshot.val() != "") {
+        firebase.database().ref('tournament/'+snapshot.val()).push(data);
+      }
+    });
+    firebase.database().ref('global').push(data);
+    console.log(this.gui.name+"| Din Poäng: "+data.score);
   }
 
   Game.prototype.revealSquare = function(x, y)
@@ -631,6 +667,7 @@
 
   Game.prototype.startGame = function()
   {
+    this.gui.name = prompt("Ditt Namn");
     rectangle(0, 0, totalWidth, totalHeight, "white");
     this.gui.drawGui();
     this.gui.audio.newGame.play();

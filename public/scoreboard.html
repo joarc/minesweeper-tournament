@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8">
+    <title>Scoreboard</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <table class="table table-bordered" id="tournament" style="margin-bottom: 50px;">
+        <thead>
+          <tr>
+            <th>Poäng</th>
+            <th>Namn</th>
+            <th>Tid</th>
+            <th>Svårighetsgrad</th>
+            <th>Storlek</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <table class="table table-bordered" id="global">
+        <thead>
+          <tr>
+            <th>Poäng</th>
+            <th>Namn</th>
+            <th>Tid</th>
+            <th>Svårighetsgrad</th>
+            <th>Storlek</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/3.8.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyBENZopvXaYEc4llB2igJwUGEjkpVra5J8",
+        authDomain: "minesweeper-29f5c.firebaseapp.com",
+        databaseURL: "https://minesweeper-29f5c.firebaseio.com",
+        projectId: "minesweeper-29f5c",
+        storageBucket: "minesweeper-29f5c.appspot.com",
+        messagingSenderId: "430546270159"
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script>
+    // Append row
+    function addRow(id, snapshot) {
+      var score = "", name = "", time = "", difficulty = "", size = "";
+      $("#"+id).find("tbody").append('<tr><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+snapshot.val().time+'</td><td>'+snapshot.val().difficulty+'</td><td>'+snapshot.val().size+'</td></tr>');
+    }
+
+    // Hide tournament
+    $("#tournament").hide();
+
+    // Show tournament if active
+    firebase.database().ref('activeTournament').once('value', function(snapshot){
+      if (snapshot.val() != null) {
+        $("#tournament").show();
+        firebase.database().ref('tournament/'+snapshot.val()).on('child_added', function(snapshot){
+          if (snapshot.val() != null) {
+            addRow("tournament", snapshot);
+          }
+        });
+      }
+    });
+
+    // Global scoreboard
+    firebase.database().ref('global').on('child_added', function(snapshot){
+      if (snapshot.val() != null) {
+        addRow("global", snapshot);
+      }
+    });
+    </script>
+  </body>
+</html>
