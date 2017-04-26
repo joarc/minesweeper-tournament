@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Scoreboard</title>
+    <link rel="shortcut icon" type="image/png" href="/img/favicon.png">
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
@@ -17,7 +18,26 @@
   </head>
   <body>
     <div class="container-fluid">
-      <table class="table table-bordered" id="tournament" style="margin-bottom: 50px;">
+      <div id="tournament-div" style="display:none;">
+        <br>
+        <p><b>Turnering: </b><span id="tournament-name">-</span></p>
+        <table class="table table-bordered" id="tournament" style="margin-bottom: 50px;">
+          <thead>
+            <tr>
+              <th>Poäng</th>
+              <th>Namn</th>
+              <th>Tid</th>
+              <th>Kvarvarande Minor</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <hr>
+      </div>
+      <br>
+      <p><b>Nybörjare</b></p>
+      <table class="table table-bordered" id="global0">
         <thead>
           <tr>
             <th>Poäng</th>
@@ -30,7 +50,24 @@
         <tbody>
         </tbody>
       </table>
-      <table class="table table-bordered" id="global">
+      <hr>
+      <p><b>Etablerad</b></p>
+      <table class="table table-bordered" id="global1">
+        <thead>
+          <tr>
+            <th>Poäng</th>
+            <th>Namn</th>
+            <th>Tid</th>
+            <th>Svårighetsgrad</th>
+            <th>Storlek</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <hr>
+      <p><b>Expert</b></p>
+      <table class="table table-bordered" id="global2">
         <thead>
           <tr>
             <th>Poäng</th>
@@ -44,6 +81,7 @@
         </tbody>
       </table>
     </div>
+    <script src="/moment.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/3.8.0/firebase.js"></script>
     <script>
       // Initialize Firebase
@@ -59,21 +97,52 @@
     </script>
     <script>
     // Append row
-    function addRow(id, snapshot) {
-      var score = "", name = "", time = "", difficulty = "", size = "";
-      $("#"+id).find("tbody").append('<tr><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+snapshot.val().time+'</td><td>'+snapshot.val().difficulty+'</td><td>'+snapshot.val().size+'</td></tr>');
-    }
+    function addRow(id, snapshot, tournament = false) {
+      var score = "",
+          name = "",
+          //time = moment(new Date(snapshot.val().timestamp)).format('YYYY-MM-DD HH:mm:ss'),
+          time = "",
+          difficulty = "",
+          size = "";
+      var minutes = String(Math.floor(snapshot.val().time/60));
+      if (minutes.length === 1)
+        minutes = "0" + minutes;
+      var seconds = String(snapshot.val().time % 60);
+      if (seconds.length === 1)
+        seconds = "0" + seconds;
 
-    // Hide tournament
-    $("#tournament").hide();
+      time = minutes + ":" + seconds;
+      switch(snapshot.val().difficulty) {
+        case 0: difficulty = "Nybörjare"; break;
+        case 1: difficulty = "Etablerad"; break;
+        case 2: difficulty = "Expert"; break;
+        default: difficulty = "Okänt"; break;
+      }
+      switch(snapshot.val().size) {
+        case 0: size = "8 x 8"; break;
+        case 1: size = "16 x 16"; break;
+        case 2: size = "23 x 23"; break;
+        default: size = "? x ?"; break;
+      }
+      if (tournament) {
+        $("#"+id).find("tbody").append('<tr class="'+snapshot.val().score+'"><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+time+'</td><td>'+snapshot.val().remainingMines+'</td></tr>');
+      } else {
+        $("#"+id).find("tbody").append('<tr class="'+snapshot.val().score+'"><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
+      }
+      $("#"+id).find("tr").sort(sort_li).appendTo("#"+id);
+      function sort_li(a, b){
+        return ($(b).data('score')) < ($(a).data('score')) ? 1 : -1;
+      }
+    }
 
     // Show tournament if active
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null) {
-        $("#tournament").show();
+        $("#tournament-div").show();
+        $("#tournament-name").text(snapshot.val());
         firebase.database().ref('tournament/'+snapshot.val()).on('child_added', function(snapshot){
           if (snapshot.val() != null) {
-            addRow("tournament", snapshot);
+            addRow("tournament", snapshot, true);
           }
         });
       }
@@ -82,7 +151,7 @@
     // Global scoreboard
     firebase.database().ref('global').on('child_added', function(snapshot){
       if (snapshot.val() != null) {
-        addRow("global", snapshot);
+        addRow("global"+snapshot.val().difficulty, snapshot);
       }
     });
     </script>

@@ -16,7 +16,7 @@
   <head>
     <title>MS Röj</title>
     <meta charset="utf-8">
-    <link rel="shortcut icon" type="image/png" href="http://xzy.se/minesweeper/img/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="/img/favicon.png">
     <style>
       @import url('https://fonts.googleapis.com/css?family=Baloo+Thambi');
       @import url('https://fonts.googleapis.com/css?family=Ubuntu');
@@ -26,18 +26,18 @@
 
     <h2>Laddar data...</h2>
 
-    <audio id="mines2" loop><source src="http://xzy.se/minesweeper/sounds/mines2.wav" type="audio/wav"></audio>
-    <audio id="mines" loop><source src="http://xzy.se/minesweeper/sounds/mines.wav" type="audio/wav"></audio>
-    <audio id="area"><source src="http://xzy.se/minesweeper/sounds/area.wav" type="audio/wav"></audio>
-    <audio id="flag"><source src="http://xzy.se/minesweeper/sounds/flag.wav" type="audio/wav"></audio>
-    <audio id="explode"><source src="http://xzy.se/minesweeper/sounds/explode.wav" type="audio/wav"></audio>
-    <audio id="intro" loop><source src="http://xzy.se/minesweeper/sounds/intro.wav" type="audio/wav"></audio>
-    <audio id="reveal"><source src="http://xzy.se/minesweeper/sounds/reveal.wav" type="audio/wav"></audio>
-    <audio id="victory"><source src="http://xzy.se/minesweeper/sounds/victory.wav" type="audio/wav"></audio>
-    <audio id="newGame"><source src="http://xzy.se/minesweeper/sounds/newGame.wav" type="audio/wav"></audio>
-    <audio id="begin"><source src="http://xzy.se/minesweeper/sounds/begin.wav" type="audio/wav"></audio>
+    <audio id="mines2" loop><source src="/sounds/mines2.wav" type="audio/wav"></audio>
+    <audio id="mines" loop><source src="/sounds/mines.wav" type="audio/wav"></audio>
+    <audio id="area"><source src="/sounds/area.wav" type="audio/wav"></audio>
+    <audio id="flag"><source src="/sounds/flag.wav" type="audio/wav"></audio>
+    <audio id="explode"><source src="/sounds/explode.wav" type="audio/wav"></audio>
+    <audio id="intro" loop><source src="/sounds/intro.wav" type="audio/wav"></audio>
+    <audio id="reveal"><source src="/sounds/reveal.wav" type="audio/wav"></audio>
+    <audio id="victory"><source src="/sounds/victory.wav" type="audio/wav"></audio>
+    <audio id="newGame"><source src="/sounds/newGame.wav" type="audio/wav"></audio>
+    <audio id="begin"><source src="/sounds/begin.wav" type="audio/wav"></audio>
 
-    <script src="http://koda.nu/simple.js"></script>
+    <script src="/js/simple.js"></script>
     <script src="https://www.gstatic.com/firebasejs/3.8.0/firebase.js"></script>
     <script>
       // Initialize Firebase
@@ -149,11 +149,10 @@
           seconds = "0" + seconds;
 
         var t = minutes + ":" + seconds;
-
         return "Förfluten tid: " + t;
       },
       function(self) {
-        window.open('/scoreboard.html', 'Scoreboard', 'width=400,height=500,top=0,left=0,titlebar=no,menubar=no,toolbar=no,location=no,status=no');
+        window.open('/scoreboard.html', 'Scoreboard', 'width=800,height=800,top=0,left=0,titlebar=no,menubar=no,toolbar=no,location=no,status=no');
       }
     ];
 
@@ -466,14 +465,17 @@
     new Victory(this);
     this.gameRunning = false;
 
-    var mineScore = 0, timeScore = 0, score = 0;
+    var mineScore = 0, timeScore = 0, score = 0, remainingMines = 0;
     for (var i = 0; i < this.mines.length; i++) {
       var mine = this.mines[i];
-      if (mine.number === -1) mineScore += 10;
+      if (mine.number === -1) {
+        mineScore += 10;
+        remainingMines++;
+      }
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize};
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, remainingMines: remainingMines};
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
         firebase.database().ref('tournament/'+snapshot.val()).push(data);
@@ -492,14 +494,17 @@
     new Explosion(xCord, yCord, this);
     this.gameRunning = false;
 
-    var mineScore = 0, timeScore = 0, score = 0;
+    var mineScore = 0, timeScore = 0, score = 0, remainingMines = 0;
     for (var i = 0; i < this.mines.length; i++) {
       var mine = this.mines[i];
-      if (mine.number === -1) mineScore += 10;
+      if (mine.number === -1) {
+        mineScore += 10;
+        remainingMines++;
+      }
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize};
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, remainingMines: remainingMines};
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
         firebase.database().ref('tournament/'+snapshot.val()).push(data);
