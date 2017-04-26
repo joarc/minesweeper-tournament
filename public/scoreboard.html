@@ -35,51 +35,53 @@
         </table>
         <hr>
       </div>
-      <br>
-      <p><b>Nybörjare</b></p>
-      <table class="table table-bordered" id="global0">
-        <thead>
-          <tr>
-            <th>Poäng</th>
-            <th>Namn</th>
-            <th>Tid</th>
-            <th>Svårighetsgrad</th>
-            <th>Storlek</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-      <hr>
-      <p><b>Etablerad</b></p>
-      <table class="table table-bordered" id="global1">
-        <thead>
-          <tr>
-            <th>Poäng</th>
-            <th>Namn</th>
-            <th>Tid</th>
-            <th>Svårighetsgrad</th>
-            <th>Storlek</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-      <hr>
-      <p><b>Expert</b></p>
-      <table class="table table-bordered" id="global2">
-        <thead>
-          <tr>
-            <th>Poäng</th>
-            <th>Namn</th>
-            <th>Tid</th>
-            <th>Svårighetsgrad</th>
-            <th>Storlek</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
+      <div id="tournament-hide">
+        <br>
+        <p><b>Nybörjare</b></p>
+        <table class="table table-bordered" id="global0">
+          <thead>
+            <tr>
+              <th>Poäng</th>
+              <th>Namn</th>
+              <th>Tid</th>
+              <th>Svårighetsgrad</th>
+              <th>Storlek</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <hr>
+        <p><b>Etablerad</b></p>
+        <table class="table table-bordered" id="global1">
+          <thead>
+            <tr>
+              <th>Poäng</th>
+              <th>Namn</th>
+              <th>Tid</th>
+              <th>Svårighetsgrad</th>
+              <th>Storlek</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <hr>
+        <p><b>Expert</b></p>
+        <table class="table table-bordered" id="global2">
+          <thead>
+            <tr>
+              <th>Poäng</th>
+              <th>Namn</th>
+              <th>Tid</th>
+              <th>Svårighetsgrad</th>
+              <th>Storlek</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
     </div>
     <script src="/moment.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/3.8.0/firebase.js"></script>
@@ -140,6 +142,10 @@
       function sort_li(a, b){
         return ($(b).data('score')) < ($(a).data('score')) ? 1 : -1;
       }
+    }
+
+    if (window.location.hash.split("#")[1] == "tournament") {
+      $("#tournament-hide").hide();
     }
 
     // Show tournament if active
