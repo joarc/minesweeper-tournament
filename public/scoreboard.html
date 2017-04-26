@@ -96,6 +96,13 @@
       firebase.initializeApp(config);
     </script>
     <script>
+    function htmlEscape(msg) {
+      return msg
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&rt;");
+    }
+
     // Append row
     function addRow(id, snapshot, tournament = false) {
       var score = "",
@@ -104,30 +111,30 @@
           time = "",
           difficulty = "",
           size = "";
-      var minutes = String(Math.floor(snapshot.val().time/60));
+      var minutes = String(Math.floor(htmlEscape(snapshot.val().time)/60));
       if (minutes.length === 1)
         minutes = "0" + minutes;
-      var seconds = String(snapshot.val().time % 60);
+      var seconds = String(htmlEscape(snapshot.val().time) % 60);
       if (seconds.length === 1)
         seconds = "0" + seconds;
 
-      time = minutes + ":" + seconds;
-      switch(snapshot.val().difficulty) {
+      time = htmlEscape(minutes + ":" + seconds);
+      switch(htmlEscape(snapshot.val().difficulty)) {
         case 0: difficulty = "Nybörjare"; break;
         case 1: difficulty = "Etablerad"; break;
         case 2: difficulty = "Expert"; break;
         default: difficulty = "Okänt"; break;
       }
-      switch(snapshot.val().size) {
+      switch(htmlEscape(snapshot.val().size)) {
         case 0: size = "8 x 8"; break;
         case 1: size = "16 x 16"; break;
         case 2: size = "23 x 23"; break;
         default: size = "? x ?"; break;
       }
       if (tournament) {
-        $("#"+id).find("tbody").append('<tr class="'+snapshot.val().score+'"><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+time+'</td><td>'+snapshot.val().remainingMines+'</td></tr>');
+        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+htmlEscape(snapshot.val().remainingMines)+'</td></tr>');
       } else {
-        $("#"+id).find("tbody").append('<tr class="'+snapshot.val().score+'"><td>'+snapshot.val().score+'</td><td>'+snapshot.val().name+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
+        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
       }
       $("#"+id).find("tr").sort(sort_li).appendTo("#"+id);
       function sort_li(a, b){
