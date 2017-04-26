@@ -15,6 +15,12 @@
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <style>
+    th, td {
+      font-size: 30px;
+    }
+    </style>
   </head>
   <body>
     <div class="container-fluid">
@@ -99,7 +105,7 @@
     </script>
     <script>
     function htmlEscape(msg) {
-      return msg
+      return String(msg)
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&rt;");
