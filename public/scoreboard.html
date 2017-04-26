@@ -32,8 +32,7 @@
             <tr>
               <th>Poäng</th>
               <th>Namn</th>
-              <th>Tid</th>
-              <th>Kvarvarande Minor</th>
+              <th>Rutor Visade</th>
             </tr>
           </thead>
           <tbody>
@@ -140,7 +139,7 @@
         default: size = "? x ?"; break;
       }
       if (tournament) {
-        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+htmlEscape(snapshot.val().remainingMines)+'</td></tr>');
+        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+htmlEscape(snapshot.val().squaresRevealed)+'</td></tr>');
       } else {
         $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
       }

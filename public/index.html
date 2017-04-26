@@ -475,7 +475,7 @@
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, remainingMines: remainingMines};
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
         firebase.database().ref('tournament/'+snapshot.val()).push(data);
@@ -504,7 +504,7 @@
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, remainingMines: remainingMines};
+    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
         firebase.database().ref('tournament/'+snapshot.val()).push(data);
