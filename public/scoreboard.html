@@ -137,7 +137,7 @@
 
     // Show tournament if active
     firebase.database().ref('activeTournament').once('value', function(snapshot){
-      if (snapshot.val() != null) {
+      if (snapshot.val() != null && snapshot.val != "") {
         $("#tournament-div").show();
         $("#tournament-name").text(snapshot.val());
         firebase.database().ref('tournament/'+snapshot.val()).on('child_added', function(snapshot){
