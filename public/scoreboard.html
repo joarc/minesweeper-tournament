@@ -139,13 +139,13 @@
         default: size = "? x ?"; break;
       }
       if (tournament) {
-        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+htmlEscape(snapshot.val().squaresRevealed)+'</td></tr>');
+        $("#"+id).find("tbody").append('<tr data-score="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+htmlEscape(snapshot.val().squaresRevealed)+'</td></tr>');
       } else {
-        $("#"+id).find("tbody").append('<tr class="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
+        $("#"+id).find("tbody").append('<tr data-score="'+htmlEscape(snapshot.val().score)+'"><td>'+htmlEscape(snapshot.val().score)+'</td><td>'+htmlEscape(snapshot.val().name)+'</td><td>'+time+'</td><td>'+difficulty+'</td><td>'+size+'</td></tr>');
       }
-      $("#"+id).find("tr").sort(sort_li).appendTo("#"+id);
+      $("#"+id+" tbody").children("tr").sort(sort_li).appendTo("#"+id);
       function sort_li(a, b){
-        return ($(b).data('score')) < ($(a).data('score')) ? 1 : -1;
+        return parseInt($(b).attr('data-score')) < parseInt($(a).attr('data-score')) ? 1 : -1;
       }
     }
 
