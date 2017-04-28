@@ -53,12 +53,11 @@
     </script>
     <script>
 
-  function Gui(audio)
+  function Gui()
   {
     this.topSpacing = 30;
     this.xSpacing = 50;
     this.width = 235;
-    this.height = 470;
     this.border = 5;
     this.padding = 20;
     this.objectMargin = 10;
@@ -73,10 +72,11 @@
     this.game = false;
     this.mouseWasInside = false;
     this.oldDate = new Date();
-    this.audio = audio;
     this.splash = new Splash(this);
     this.time = 0;
     this.lastTime = 0;
+    this.soundMuted = false;
+    this.musicMuted = false;
 
     this.elements =
     [
@@ -89,12 +89,21 @@
       {type: "button", text: "8 X 8", size: 13, hover: "false", selGroup: 1},
       {type: "button", text: "16 X 16", size: 13, hover: "false", selGroup: 1},
       {type: "button", text: "23 X 23", size: 13, hover: "false", selGroup: 1},
+      {type: "text", text: "Inställningar:", size: 13},
+      {type: "button", text: false, size: 13, hover: "false", selGroup: -1},
+      {type: "button", text: false, size: 13, hover: "false", selGroup: -1},
       {type: "text", text: "", size: 10},
       {type: "text", text: false, size: 13, color: "red"},
-      {type: "button", text: "Scoreboard", size: 13, hover: "false", selGroup: 2}
+      {type: "text", text: false, size: 13, color: "lightgray"},
+      {type: "button", text: "Scoreboard", size: 13, hover: "false", selGroup: -1}
     ];
 
     this.latestInSelGroup = [3, 7];
+
+    // Funktionerna ska ligga i sammma ordning som i elements. Funktionerna kan fylla två olika syften (eller båda): Om text === false,
+    // kommer funktionen att anropas med andra argumentet som "text" när guin begär vad för text den ska rita. Om text inte är false tar guin dess värde istället.
+    // Om elementet är av typ knapp och en användare klickar på det, kommer funktionen anropas med andra argumentet som "click".
+    // Observera annorlunda syntax med { nedan
 
     this.functions =
     [
@@ -139,6 +148,41 @@
         self.newGameSize = 2;
       },
       function(self) {},
+      function(self, action) {
+        if (action === "text")
+        {
+          if (self.soundMuted)
+            return "Ljudeffekter av";
+          else
+            return "Ljudeffekter på";
+        }
+        else if (action === "click")
+        {
+          self.soundMuted = !self.soundMuted;
+          if (self.soundMuted)
+            self.turnSoundOff();
+          else
+            self.turnSoundOn();
+        }
+      },
+      function(self, action) {
+        if (action === "text")
+        {
+          if (self.musicMuted)
+            return "Musik av";
+          else
+            return "Musik på";
+        }
+        else if (action === "click")
+        {
+          self.musicMuted = !self.musicMuted;
+          if (self.musicMuted)
+            self.turnMusicOff();
+          else
+            self.turnMusicOn();
+        }
+      },
+      function(self) {},
       function(self) {
         var minutes = String(floor(self.time/60));
         if (minutes.length === 1)
@@ -152,12 +196,83 @@
         return "Förfluten tid: " + t;
       },
       function(self) {
+        if (self.game)
+          return "Minor kvar: " + (self.game.numberOfMines - self.game.numberOfFlags);
+        else
+          return "";
+      },
+      function(self) {
         window.open('/scoreboard.html', 'Scoreboard', 'width=800,height=800,top=0,left=0,titlebar=no,menubar=no,toolbar=no,location=no,status=no');
       }
     ];
 
+    this.start();
+  }
+
+  Gui.prototype.start = function()
+  {
+    this.height = this.border * 2 + this.padding * 2;
+    for (var i = 0; i < this.elements.length; ++i)
+      this.height += this.elements[i].size * 2 + this.objectMargin;
+
+    this.audio =
+    {
+      mines2: document.getElementById("mines2"),
+      mines: document.getElementById("mines"),
+      flag: document.getElementById("flag"),
+      victory: document.getElementById("victory"),
+      explode: document.getElementById("explode"),
+      intro: document.getElementById("intro"),
+      reveal: document.getElementById("reveal"),
+      begin: document.getElementById("begin"),
+      newGame: document.getElementById("newGame"),
+      area: document.getElementById("area")
+    }
+
+    this.turnSoundOn();
+    this.turnMusicOn();
+    fill("white");
     requestAnimationFrame(this.loop.bind(this));
     this.audio.intro.play();
+  };
+
+  Gui.prototype.turnSoundOn = function()
+  {
+    with (this.audio)
+    {
+      flag.volume = 0.2;
+      reveal.volume = 0.5;
+      begin.volume = 0.4;
+      newGame.volume = 0.5;
+      area.volume = 0.2;
+    }
+  }
+
+  Gui.prototype.turnSoundOff = function()
+  {
+    with (this.audio)
+    {
+      flag.volume = reveal.volume = begin.volume = newGame.volume = area.volume = 0;
+    }
+  }
+
+  Gui.prototype.turnMusicOn = function()
+  {
+    with (this.audio)
+    {
+      mines2.volume = 0.1;
+      mines.volume = 0.1;
+      intro.volume = 0.7;
+      victory.volume = 0.3;
+    }
+  }
+
+  Gui.prototype.turnMusicOff = function()
+  {
+    with (this.audio)
+    {
+      mines2.volume = mines.volume = intro.volume = victory.volume = 0;
+    }
   }
 
   Gui.prototype.stopAllBackgroundMusic = function()
@@ -191,24 +306,23 @@
     {
       var height = this.elements[i].size * 2;
 
+      var str;
+      // Är elementets text satt till false, kommer istället dess funktion, som annars inte är specificerad för text, att förse med texten:
+      if (this.elements[i].text === false)
+        str = this.functions[i](this, "text");
+      else
+        str = this.elements[i].text;
+
       if (this.elements[i].type === "button")
       {
         var buttonColor = this.latestInSelGroup[this.elements[i].selGroup] === i ? buttonColorSelected : buttonColorUnselected;
         var thisButtonColor = this.elements[i].hover === true ? buttonHoverColor : buttonColor;
 
         rectangle(this.xSpacing + this.border + this.padding, yPos, this.width - (this.border + this.padding) * 2, height, thisButtonColor);
-        text(this.xSpacing + this.border + this.padding + leftTextMargin, yPos + (height + this.elements[i].size) / 2 - 2, this.elements[i].size, this.elements[i].text, textColor);
+        text(this.xSpacing + this.border + this.padding + leftTextMargin, yPos + (height + this.elements[i].size) / 2 - 2, this.elements[i].size, str, textColor);
       }
       else if (this.elements[i].type === "text")
       {
-        var str;
-
-        // Är elementets text satt till false, kommer istället dess funktion, som annars inte är specificerad för text, att förse med texten:
-        if (this.elements[i].text === false)
-          str = this.functions[i](this);
-        else
-          str = this.elements[i].text;
-
         var color = typeof this.elements[i].color === "undefined" ? textColor : this.elements[i].color;
         text(this.xSpacing + this.border + this.padding + leftTextMargin, yPos + (height + this.elements[i].size) / 2, this.elements[i].size, str, color);
       }
@@ -240,7 +354,7 @@
 
           if (this.mouseLeftClick && this.elements[i].type === "button")
           {
-            this.functions[i](this);
+            this.functions[i](this, "click");
             if (this.elements[i].selGroup !== -1)
               this.latestInSelGroup[this.elements[i].selGroup] = i;
           }
@@ -304,6 +418,7 @@
   {
     this.difficulties = [0.1, 0.17, 0.24];
     this.sizes = [8, 16, 23];
+    this.textColors = ["undefined", 253, 119, 360, 282, 37, 181, 64, 30]; // the hue in hsl
 
     this.mines = [];
     this.animationList = [];
@@ -324,6 +439,7 @@
     this.multipleSquaresRevealed = -1000; // Det ska inte låta första gången, men sedan sätts den till 0.
     this.time = 0;
     this.second = 0;
+    this.numberOfFlags = 0;
 
     this.startGame();
   }
@@ -363,7 +479,7 @@
     {
       rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsla(0, 0%, 83%, " + opacity + ")");
       if (this.mines[pos].number !== 0)
-        text(xCord + 10, yCord + 20, 15, this.mines[pos].number, "hsla(0, 0%, 0%, " + opacity + ")");
+        text(xCord + 10, yCord + 20, 15, this.mines[pos].number, "hsla(" + this.textColors[this.mines[pos].number] + ", 100%, 30%, " + opacity + ")");
     }
     else if (type === "flag")
       rectangle(xCord, yCord, this.squareSize, this.squareSize, "hsla(39, 100%, 50%, " + opacity + ")");
@@ -482,7 +598,7 @@
       }
     });
     firebase.database().ref('global').push(data);
-    console.log(this.gui.name+"| Din Poäng: "+data.score);
+    console.log(this.gui.name+" | Din Poäng: "+data.score);
   }
 
   Game.prototype.lose = function(x, y)
@@ -574,11 +690,13 @@
       this.mines[pos].state = 2;
       this.drawSquare(x, y, "flag");
       this.gui.audio.flag.play();
+      ++this.numberOfFlags;
     }
     else if (this.mines[pos].state === 2)
     {
       this.mines[pos].state = 0;
       this.drawSquare(x, y, "hidden");
+      --this.numberOfFlags;
     }
   }
 
@@ -903,32 +1021,7 @@
       c.context2D.fillText(text, x, y);
     }
 
-    var audio =
-    {
-      mines2: document.getElementById("mines2"),
-      mines: document.getElementById("mines"),
-      flag: document.getElementById("flag"),
-      victory: document.getElementById("victory"),
-      explode: document.getElementById("explode"),
-      intro: document.getElementById("intro"),
-      reveal: document.getElementById("reveal"),
-      begin: document.getElementById("begin"),
-      newGame: document.getElementById("newGame"),
-      area: document.getElementById("area")
-    }
-
-    audio.mines2.volume = 0.1;
-    audio.mines.volume = 0.1;
-    audio.intro.volume = 0.7;
-    audio.victory.volume = 0.3;
-    audio.flag.volume = 0.2;
-    audio.reveal.volume = 0.5;
-    audio.begin.volume = 0.4;
-    audio.newGame.volume = 0.5;
-    audio.area.volume = 0.2;
-
-    fill("white");
-    gui = new Gui(audio);
+    gui = new Gui();
   }
 
     </script>
