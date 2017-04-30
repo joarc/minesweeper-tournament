@@ -4,7 +4,7 @@
     "tournament": {
       "$tournament": {
         "$score": {
-          ".write": "!data.exists() && newData.child('name').val() != null && newData.child('score').val() != null && newData.child('timestamp').val() != null && newData.child('difficulty').val() != null && newData.child('size').val() != null && newData.child('time').val() != null && (root.child('activeTournament').val() != null || root.child('activeTournament').val() != '')"
+          ".write": "!data.exists() && newData.child('key').val() == 'asdfasdf' && newData.child('name').val() != null && newData.child('score').val() != null && newData.child('timestamp').val() != null && newData.child('difficulty').val() != null && newData.child('size').val() != null && newData.child('time').val() != null && (root.child('activeTournament').val() != null || root.child('activeTournament').val() != '')"
         }
       }
     },

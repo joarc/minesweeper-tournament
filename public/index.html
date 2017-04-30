@@ -20,6 +20,9 @@
     <style>
       @import url('https://fonts.googleapis.com/css?family=Baloo+Thambi');
       @import url('https://fonts.googleapis.com/css?family=Ubuntu');
+      body, canvas {
+        background-color: black;
+      }
     </style>
   </head>
   <body>
@@ -231,7 +234,7 @@
 
     this.turnSoundOn();
     this.turnMusicOn();
-    fill("white");
+    fill("black");
     requestAnimationFrame(this.loop.bind(this));
     this.audio.intro.play();
   };
@@ -504,7 +507,7 @@
 
   Game.prototype.drawEverything = function()
   {
-    rectangle(0, 0, totalWidth, totalHeight, "white");
+    rectangle(0, 0, totalWidth, totalHeight, "black");
     this.gui.drawGui();
 
     for (var i = 0; i < this.mines.length; ++i)
@@ -585,14 +588,14 @@
     var mineScore = 0, timeScore = 0, score = 0, remainingMines = 0;
     for (var i = 0; i < this.mines.length; i++) {
       var mine = this.mines[i];
-      if (mine.number === -1) {
+      if (mine.number === -1 && mine.state != 2) {
         mineScore += 10;
         remainingMines++;
       }
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
+    var data = {mineScore: mineScore, timeScore: timeScore, key: "asdfasdf", name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
     if (window.location.hash.split("#")[1] == "tournament")
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
@@ -615,14 +618,14 @@
     var mineScore = 0, timeScore = 0, score = 0, remainingMines = 0;
     for (var i = 0; i < this.mines.length; i++) {
       var mine = this.mines[i];
-      if (mine.number === -1) {
+      if (mine.number === -1 && mine.state != 2) {
         mineScore += 10;
         remainingMines++;
       }
     }
     timeScore += this.gui.time;
     score = mineScore+timeScore;
-    var data = {name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
+    var data = {mineScore: mineScore, timeScore: timeScore, key: "asdfasdf", name: this.gui.name, timestamp: new Date().getTime(), score: score, time: this.gui.time, difficulty: this.gui.newGameDifficulty, size: this.gui.newGameSize, squaresRevealed: this.squaresRevealed};
     if (window.location.hash.split("#")[1] == "tournament")
     firebase.database().ref('activeTournament').once('value', function(snapshot){
       if (snapshot.val() != null && snapshot.val() != "") {
@@ -794,7 +797,7 @@
   Game.prototype.startGame = function()
   {
     this.gui.name = prompt("Ditt Namn");
-    rectangle(0, 0, totalWidth, totalHeight, "white");
+    rectangle(0, 0, totalWidth, totalHeight, "black");
     this.gui.drawGui();
     this.gui.audio.newGame.play();
     this.gui.animationList.push(this.handleMineFieldGui.bind(this));
@@ -827,7 +830,7 @@
       this.y = random(totalHeight - 65) + 65;
     }
 
-    rectangle(this.gui.xSpacing * 2 + this.gui.width, 0, totalWidth, totalHeight, "white");
+    rectangle(this.gui.xSpacing * 2 + this.gui.width, 0, totalWidth, totalHeight, "black");
     text(this.x, this.y, 65, "MS Röj", "red", "Baloo Thambi");
 
     this.t += diff;
@@ -1002,7 +1005,7 @@
     {
       this.h += diff * 20;
 
-      rectangle(this.game.leftSpacing, this.game.gui.topSpacing, totalWidth, totalHeight, "white");
+      rectangle(this.game.leftSpacing, this.game.gui.topSpacing, totalWidth, totalHeight, "black");
       text(this.game.leftSpacing + 30, this.game.gui.topSpacing + 150, 80, "Grattis!", "hsla("+this.h+", 50%, 50%, " + 2 * (this.t - this.t2) / (this.t4 - this.t3) + ")");
     }
     if (this.t >= this.t5 && !this.introMusicStarted)
